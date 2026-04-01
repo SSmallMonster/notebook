@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技术笔记本</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f6f8fa;
+            color: #24292f;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: fit-content;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e1e4e8;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .sidebar h3 {
+            color: #0969da;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f1f3f4;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 0.8rem;
+            margin: 0.2rem 0;
+            color: #656d76;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background-color: #f6f8fa;
+            color: #0969da;
+            border-left-color: #0969da;
+        }
+
+        .nav-item.active {
+            background-color: #dbeafe;
+            color: #0969da;
+            border-left-color: #0969da;
+            font-weight: 500;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #f1f3f4;
+            color: #656d76;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin: 0.1rem;
+        }
+
+        .tag.k8s { background: #e3f2fd; color: #1976d2; }
+        .tag.ai-llm { background: #f3e5f5; color: #7b1fa2; }
+        .tag.storage { background: #e8f5e8; color: #388e3c; }
+        .tag.network { background: #fff3e0; color: #f57c00; }
+        .tag.crash { background: #ffebee; color: #d32f2f; }
+        .tag.performance { background: #fff8e1; color: #f57c00; }
+        .tag.config { background: #e0f2f1; color: #00695c; }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e1e4e8;
+            min-height: 600px;
+        }
+
+        .note-header {
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .note-title {
+            font-size: 2rem;
+            color: #24292f;
+            margin-bottom: 0.5rem;
+        }
+
+        .note-meta {
+            color: #656d76;
+            font-size: 0.9rem;
+        }
+
+        .note-tags {
+            margin-top: 0.8rem;
+        }
+
+        .note-content {
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .note-content h1, .note-content h2, .note-content h3 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #24292f;
+        }
+
+        .note-content h1 { font-size: 1.8rem; border-bottom: 2px solid #e1e4e8; padding-bottom: 0.5rem; }
+        .note-content h2 { font-size: 1.5rem; }
+        .note-content h3 { font-size: 1.3rem; }
+
+        .note-content ul, .note-content ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        .note-content li {
+            margin: 0.5rem 0;
+        }
+
+        .note-content pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .note-content code {
+            background: #f6f8fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9rem;
+        }
+
+        .note-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .note-content blockquote {
+            border-left: 4px solid #0969da;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: #656d76;
+            background: #f6f8fa;
+            padding: 1rem;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid #0969da;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0969da;
+        }
+
+        .stat-label {
+            color: #656d76;
+            font-size: 0.9rem;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #0969da;
+            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #656d76;
+        }
+
+        .error {
+            color: #d1242f;
+            background: #fff5f5;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #fecaca;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 技术笔记本</h1>
+        <p>K8s • AI/LLM • 存储系统 • 网络技术</p>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <input type="text" class="search-box" placeholder="搜索笔记..." id="searchBox">
+
+            <h3>📊 统计</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalNotes">0</div>
+                    <div class="stat-label">总笔记</div>
+                </div>
+            </div>
+
+            <h3>📝 故障排除</h3>
+            <div id="troubleshootingNav"></div>
+
+            <h3>📚 知识积累</h3>
+            <div id="knowledgeNav"></div>
+
+            <h3>🏷️ 标签</h3>
+            <div id="tagsNav"></div>
+
+            <h3>📅 最近</h3>
+            <div id="recentNav"></div>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        class NotebookViewer {
+            constructor() {
+                this.notes = [];
+                this.currentNote = null;
+                this.init();
+            }
+
+            async init() {
+                await this.loadNotes();
+                this.setupEventListeners();
+                this.renderSidebar();
+                this.showHome();
+            }
+
+            async loadNotes() {
+                try {
+                    // 模拟加载笔记数据
+                    this.notes = await this.fetchNotes();
+                } catch (error) {
+                    console.error('加载笔记失败:', error);
+                    this.showError('加载笔记失败');
+                }
+            }
+
+            async fetchNotes() {
+                // 实际项目中这里会从服务器获取数据
+                // 现在模拟一些数据
+                return [
+                    {
+                        id: 'lmcache-build-compilation',
+                        title: 'LMCache本地编译安装问题解决',
+                        type: 'troubleshooting',
+                        category: 'ai-llm',
+                        date: '2026-04-01',
+                        tags: ['ai-llm', 'lmcache', 'build', 'pip', 'torch', 'cuda'],
+                        path: '../troubleshooting/ai-llm/2026-04-01-lmcache-build-compilation.md',
+                        summary: 'pip install -e . 重复下载torch，编译时缺少CUDA头文件等问题的完整解决方案'
+                    },
+                    {
+                        id: 'k8s-pod-example',
+                        title: 'Pod持续重启CrashLoopBackOff状态',
+                        type: 'troubleshooting',
+                        category: 'k8s',
+                        date: '2026-04-01',
+                        tags: ['k8s', 'k8s-pod', 'crash'],
+                        path: '../troubleshooting/k8s/2026-04-01-k8s-pod-example.md',
+                        summary: 'Pod CrashLoopBackOff问题的诊断和解决过程'
+                    },
+                    {
+                        id: 'k8s-networking-concept',
+                        title: 'Kubernetes网络基础概念',
+                        type: 'knowledge',
+                        category: 'concepts',
+                        date: '2026-04-01',
+                        tags: ['k8s', 'k8s-networking', 'network'],
+                        path: '../knowledge/concepts/k8s-networking-example-concept.md',
+                        summary: 'K8s网络模型的基础概念和配置指南'
+                    }
+                ];
+            }
+
+            setupEventListeners() {
+                document.getElementById('searchBox').addEventListener('input', (e) => {
+                    this.searchNotes(e.target.value);
+                });
+
+                // 处理浏览器前进后退
+                window.addEventListener('popstate', (e) => {
+                    if (e.state && e.state.noteId) {
+                        this.showNote(e.state.noteId, false);
+                    } else {
+                        this.showHome(false);
+                    }
+                });
+            }
+
+            renderSidebar() {
+                this.renderStats();
+                this.renderNavigation();
+            }
+
+            renderStats() {
+                document.getElementById('totalNotes').textContent = this.notes.length;
+            }
+
+            renderNavigation() {
+                const troubleshooting = this.notes.filter(n => n.type === 'troubleshooting');
+                const knowledge = this.notes.filter(n => n.type === 'knowledge');
+
+                this.renderNavSection('troubleshootingNav', troubleshooting);
+                this.renderNavSection('knowledgeNav', knowledge);
+                this.renderTags();
+                this.renderRecent();
+            }
+
+            renderNavSection(containerId, notes) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+
+                notes.forEach(note => {
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'nav-item';
+                    item.innerHTML = `
+                        <div style="font-weight: 500;">${note.title}</div>
+                        <div style="font-size: 0.8rem; color: #656d76; margin-top: 0.2rem;">
+                            ${note.date} • ${this.formatCategory(note.category)}
+                        </div>
+                        <div style="margin-top: 0.4rem;">
+                            ${note.tags.slice(0, 3).map(tag => `<span class="tag ${tag}">${tag}</span>`).join('')}
+                        </div>
+                    `;
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.showNote(note.id);
+                    });
+                    container.appendChild(item);
+                });
+            }
+
+            renderTags() {
+                const allTags = [...new Set(this.notes.flatMap(n => n.tags))];
+                const container = document.getElementById('tagsNav');
+                container.innerHTML = '';
+
+                allTags.forEach(tag => {
+                    const count = this.notes.filter(n => n.tags.includes(tag)).length;
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'nav-item';
+                    item.innerHTML = `<span class="tag ${tag}">${tag}</span> (${count})`;
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.filterByTag(tag);
+                    });
+                    container.appendChild(item);
+                });
+            }
+
+            renderRecent() {
+                const recent = [...this.notes].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+                const container = document.getElementById('recentNav');
+                container.innerHTML = '';
+
+                recent.forEach(note => {
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'nav-item';
+                    item.innerHTML = `
+                        <div style="font-weight: 500; font-size: 0.9rem;">${note.title}</div>
+                        <div style="font-size: 0.8rem; color: #656d76;">${note.date}</div>
+                    `;
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.showNote(note.id);
+                    });
+                    container.appendChild(item);
+                });
+            }
+
+            async showNote(noteId, pushState = true) {
+                const note = this.notes.find(n => n.id === noteId);
+                if (!note) return;
+
+                this.currentNote = note;
+
+                // 更新URL
+                if (pushState) {
+                    history.pushState({noteId}, note.title, `#${noteId}`);
+                }
+
+                // 高亮当前选中的导航项
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                try {
+                    const content = await this.loadNoteContent(note.path);
+                    this.renderNote(note, content);
+                } catch (error) {
+                    this.showError(`加载笔记失败: ${error.message}`);
+                }
+            }
+
+            async loadNoteContent(path) {
+                // 实际项目中这里会从服务器获取markdown文件内容
+                // 现在返回模拟内容
+                if (path.includes('lmcache-build-compilation')) {
+                    return `# LMCache本地编译安装问题解决
+
+## 问题现象
+- **环境**: Python 3.12 venv，PyTorch已安装
+- **症状**: pip install -e . 重复下载torch，编译时缺少CUDA头文件，路径配置错误
+- **影响范围**: LMCache本地开发环境无法正常编译安装
+
+## 解决方案
+### 最终解决方案
+\`\`\`bash
+# 完整命令，两个参数缺一不可
+pip install -e . --no-build-isolation --no-deps
+\`\`\`
+
+## 根本原因
+1. **构建依赖重复安装**: pip默认创建隔离构建环境，重新安装build-system.requires中的依赖
+2. **CUDA头文件路径问题**: nvidia-cusparse-cu12等包的include路径不在编译器默认搜索路径
+3. **环境变量配置错误**: shell heredoc变量展开时机不当，导致路径污染
+
+## 总结
+- **关键学习点**: --no-deps不影响构建依赖，需配合--no-build-isolation
+- **注意事项**: CUDA包头文件需手动添加到CPATH，shell heredoc变量展开时机很关键`;
+                }
+
+                return `# ${this.currentNote.title}
+
+这是一个示例笔记内容。在实际部署时，这里会显示完整的Markdown内容。
+
+## 主要内容
+
+${this.currentNote.summary}
+
+## 标签
+${this.currentNote.tags.map(tag => `\`${tag}\``).join(' ')}
+
+## 更多信息
+- 类型: ${this.currentNote.type}
+- 分类: ${this.formatCategory(this.currentNote.category)}
+- 日期: ${this.currentNote.date}`;
+            }
+
+            renderNote(note, content) {
+                const mainContent = document.getElementById('mainContent');
+
+                // 解析markdown
+                const htmlContent = marked.parse(content);
+
+                mainContent.innerHTML = `
+                    <div class="note-header">
+                        <h1 class="note-title">${note.title}</h1>
+                        <div class="note-meta">
+                            <span>📅 ${note.date}</span>
+                            <span style="margin-left: 1rem;">📂 ${this.formatCategory(note.category)}</span>
+                            <span style="margin-left: 1rem;">📋 ${note.type === 'troubleshooting' ? '故障排除' : '知识积累'}</span>
+                        </div>
+                        <div class="note-tags">
+                            ${note.tags.map(tag => `<span class="tag ${tag}">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="note-content">
+                        ${htmlContent}
+                    </div>
+                `;
+
+                // 代码高亮
+                if (typeof hljs !== 'undefined') {
+                    mainContent.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                }
+            }
+
+            showHome(pushState = true) {
+                if (pushState) {
+                    history.pushState({}, '技术笔记本', '#');
+                }
+
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="note-header">
+                        <h1 class="note-title">🏠 技术笔记本</h1>
+                        <div class="note-meta">结构化的技术知识记录系统</div>
+                    </div>
+                    <div class="note-content">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-number">${this.notes.filter(n => n.type === 'troubleshooting').length}</div>
+                                <div class="stat-label">故障排除</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">${this.notes.filter(n => n.type === 'knowledge').length}</div>
+                                <div class="stat-label">知识积累</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number">${[...new Set(this.notes.flatMap(n => n.tags))].length}</div>
+                                <div class="stat-label">标签数量</div>
+                            </div>
+                        </div>
+
+                        <h2>📚 最新笔记</h2>
+                        <div style="margin-top: 1rem;">
+                            ${this.notes.slice(0, 5).map(note => `
+                                <div style="border: 1px solid #e1e4e8; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; cursor: pointer;"
+                                     onclick="viewer.showNote('${note.id}')">
+                                    <h3 style="margin: 0 0 0.5rem 0; color: #0969da;">${note.title}</h3>
+                                    <p style="color: #656d76; margin: 0 0 0.5rem 0; font-size: 0.9rem;">${note.summary}</p>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            ${note.tags.slice(0, 3).map(tag => `<span class="tag ${tag}">${tag}</span>`).join('')}
+                                        </div>
+                                        <span style="color: #656d76; font-size: 0.8rem;">${note.date}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <h2>🎯 使用说明</h2>
+                        <ul>
+                            <li><strong>故障排除</strong>: 记录具体问题的诊断和解决过程</li>
+                            <li><strong>知识积累</strong>: 整理技术概念、配置指南和最佳实践</li>
+                            <li><strong>智能标签</strong>: 通过技术关键词快速定位相关内容</li>
+                            <li><strong>搜索功能</strong>: 支持标题和标签的实时搜索</li>
+                        </ul>
+                    </div>
+                `;
+            }
+
+            searchNotes(query) {
+                if (!query.trim()) {
+                    this.renderNavigation();
+                    return;
+                }
+
+                const filtered = this.notes.filter(note =>
+                    note.title.toLowerCase().includes(query.toLowerCase()) ||
+                    note.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())) ||
+                    note.summary.toLowerCase().includes(query.toLowerCase())
+                );
+
+                this.renderNavSection('troubleshootingNav', filtered.filter(n => n.type === 'troubleshooting'));
+                this.renderNavSection('knowledgeNav', filtered.filter(n => n.type === 'knowledge'));
+            }
+
+            filterByTag(tag) {
+                const filtered = this.notes.filter(note => note.tags.includes(tag));
+
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="note-header">
+                        <h1 class="note-title">🏷️ 标签: ${tag}</h1>
+                        <div class="note-meta">共找到 ${filtered.length} 篇笔记</div>
+                    </div>
+                    <div class="note-content">
+                        ${filtered.map(note => `
+                            <div style="border: 1px solid #e1e4e8; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; cursor: pointer;"
+                                 onclick="viewer.showNote('${note.id}')">
+                                <h3 style="margin: 0 0 0.5rem 0; color: #0969da;">${note.title}</h3>
+                                <p style="color: #656d76; margin: 0 0 0.5rem 0; font-size: 0.9rem;">${note.summary}</p>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        ${note.tags.map(t => `<span class="tag ${t}">${t}</span>`).join('')}
+                                    </div>
+                                    <span style="color: #656d76; font-size: 0.8rem;">${note.date}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            formatCategory(category) {
+                const categories = {
+                    'k8s': 'Kubernetes',
+                    'ai-llm': 'AI/LLM',
+                    'storage': '存储系统',
+                    'network': '网络技术',
+                    'concepts': '技术概念',
+                    'configurations': '配置指南',
+                    'best-practices': '最佳实践'
+                };
+                return categories[category] || category;
+            }
+
+            showError(message) {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="error">
+                        <h2>⚠️ 错误</h2>
+                        <p>${message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 初始化应用
+        let viewer;
+        document.addEventListener('DOMContentLoaded', () => {
+            viewer = new NotebookViewer();
+
+            // 处理页面加载时的hash
+            if (window.location.hash) {
+                const noteId = window.location.hash.substring(1);
+                if (noteId) {
+                    setTimeout(() => viewer.showNote(noteId, false), 100);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
