@@ -294,7 +294,7 @@ app.get('/api/health', (req, res) => {
 
 // 默认路由，返回前端页面
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'app.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // 启动服务器

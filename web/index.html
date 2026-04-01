@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>技术笔记本</title>
+    <title>技术笔记本 - API版</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
     <style>
+        /* 使用与index.html相同的样式 */
         * {
             margin: 0;
             padding: 0;
@@ -75,6 +76,7 @@
             border-radius: 6px;
             transition: all 0.2s;
             border-left: 3px solid transparent;
+            cursor: pointer;
         }
 
         .nav-item:hover {
@@ -102,11 +104,16 @@
 
         .tag.k8s { background: #e3f2fd; color: #1976d2; }
         .tag.ai-llm { background: #f3e5f5; color: #7b1fa2; }
+        .tag.lmcache { background: #f3e5f5; color: #7b1fa2; }
         .tag.storage { background: #e8f5e8; color: #388e3c; }
         .tag.network { background: #fff3e0; color: #f57c00; }
         .tag.crash { background: #ffebee; color: #d32f2f; }
         .tag.performance { background: #fff8e1; color: #f57c00; }
         .tag.config { background: #e0f2f1; color: #00695c; }
+        .tag.build { background: #fce4ec; color: #ad1457; }
+        .tag.pip { background: #e8eaf6; color: #3f51b5; }
+        .tag.torch { background: #fff3e0; color: #e65100; }
+        .tag.cuda { background: #e0f2f1; color: #00695c; }
 
         .main-content {
             background: white;
@@ -248,6 +255,46 @@
             border: 1px solid #fecaca;
         }
 
+        .refresh-btn {
+            background: #0969da;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .refresh-btn:hover {
+            background: #0860ca;
+        }
+
+        .note-card {
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .note-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #0969da;
+        }
+
+        .note-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: #0969da;
+        }
+
+        .note-card p {
+            color: #656d76;
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
@@ -272,15 +319,11 @@
 
     <div class="container">
         <div class="sidebar">
+            <button class="refresh-btn" onclick="viewer.refreshCache()">🔄 刷新</button>
             <input type="text" class="search-box" placeholder="搜索笔记..." id="searchBox">
 
             <h3>📊 统计</h3>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalNotes">0</div>
-                    <div class="stat-label">总笔记</div>
-                </div>
-            </div>
+            <div id="statsContainer"></div>
 
             <h3>📝 故障排除</h3>
             <div id="troubleshootingNav"></div>
@@ -301,70 +344,63 @@
     </div>
 
     <script>
-        class NotebookViewer {
+        class NotebookAPI {
             constructor() {
+                this.baseURL = window.location.origin + '/api';
                 this.notes = [];
+                this.stats = {};
+                this.tags = [];
                 this.currentNote = null;
                 this.init();
             }
 
             async init() {
-                await this.loadNotes();
+                await this.loadData();
                 this.setupEventListeners();
                 this.renderSidebar();
                 this.showHome();
             }
 
-            async loadNotes() {
+            async loadData() {
                 try {
-                    // 模拟加载笔记数据
-                    this.notes = await this.fetchNotes();
+                    const [notesRes, statsRes, tagsRes] = await Promise.all([
+                        fetch(`${this.baseURL}/notes`),
+                        fetch(`${this.baseURL}/stats`),
+                        fetch(`${this.baseURL}/tags`)
+                    ]);
+
+                    this.notes = await notesRes.json();
+                    this.stats = await statsRes.json();
+                    this.tags = await tagsRes.json();
+
+                    console.log(`已加载 ${this.notes.length} 篇笔记`);
                 } catch (error) {
-                    console.error('加载笔记失败:', error);
-                    this.showError('加载笔记失败');
+                    console.error('加载数据失败:', error);
+                    this.showError('加载数据失败: ' + error.message);
                 }
             }
 
-            async fetchNotes() {
-                // 实际项目中这里会从服务器获取数据
-                // 现在模拟一些数据
-                return [
-                    {
-                        id: 'lmcache-build-compilation',
-                        title: 'LMCache本地编译安装问题解决',
-                        type: 'troubleshooting',
-                        category: 'ai-llm',
-                        date: '2026-04-01',
-                        tags: ['ai-llm', 'lmcache', 'build', 'pip', 'torch', 'cuda'],
-                        path: '../troubleshooting/ai-llm/2026-04-01-lmcache-build-compilation.md',
-                        summary: 'pip install -e . 重复下载torch，编译时缺少CUDA头文件等问题的完整解决方案'
-                    },
-                    {
-                        id: 'k8s-pod-example',
-                        title: 'Pod持续重启CrashLoopBackOff状态',
-                        type: 'troubleshooting',
-                        category: 'k8s',
-                        date: '2026-04-01',
-                        tags: ['k8s', 'k8s-pod', 'crash'],
-                        path: '../troubleshooting/k8s/2026-04-01-k8s-pod-example.md',
-                        summary: 'Pod CrashLoopBackOff问题的诊断和解决过程'
-                    },
-                    {
-                        id: 'k8s-networking-concept',
-                        title: 'Kubernetes网络基础概念',
-                        type: 'knowledge',
-                        category: 'concepts',
-                        date: '2026-04-01',
-                        tags: ['k8s', 'k8s-networking', 'network'],
-                        path: '../knowledge/concepts/k8s-networking-example-concept.md',
-                        summary: 'K8s网络模型的基础概念和配置指南'
-                    }
-                ];
+            async refreshCache() {
+                try {
+                    await fetch(`${this.baseURL}/refresh`, { method: 'POST' });
+                    await this.loadData();
+                    this.renderSidebar();
+                    this.showHome();
+                } catch (error) {
+                    console.error('刷新失败:', error);
+                    alert('刷新失败: ' + error.message);
+                }
             }
 
             setupEventListeners() {
-                document.getElementById('searchBox').addEventListener('input', (e) => {
-                    this.searchNotes(e.target.value);
+                const searchBox = document.getElementById('searchBox');
+                let searchTimeout;
+
+                searchBox.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        this.searchNotes(e.target.value);
+                    }, 300);
                 });
 
                 // 处理浏览器前进后退
@@ -380,10 +416,17 @@
             renderSidebar() {
                 this.renderStats();
                 this.renderNavigation();
+                this.renderTags();
             }
 
             renderStats() {
-                document.getElementById('totalNotes').textContent = this.notes.length;
+                const container = document.getElementById('statsContainer');
+                container.innerHTML = `
+                    <div class="stat-card" style="margin-bottom: 1rem;">
+                        <div class="stat-number">${this.stats.total || 0}</div>
+                        <div class="stat-label">总笔记</div>
+                    </div>
+                `;
             }
 
             renderNavigation() {
@@ -392,7 +435,6 @@
 
                 this.renderNavSection('troubleshootingNav', troubleshooting);
                 this.renderNavSection('knowledgeNav', knowledge);
-                this.renderTags();
                 this.renderRecent();
             }
 
@@ -400,9 +442,8 @@
                 const container = document.getElementById(containerId);
                 container.innerHTML = '';
 
-                notes.forEach(note => {
-                    const item = document.createElement('a');
-                    item.href = '#';
+                notes.slice(0, 10).forEach(note => {
+                    const item = document.createElement('div');
                     item.className = 'nav-item';
                     item.innerHTML = `
                         <div style="font-weight: 500;">${note.title}</div>
@@ -413,128 +454,72 @@
                             ${note.tags.slice(0, 3).map(tag => `<span class="tag ${tag}">${tag}</span>`).join('')}
                         </div>
                     `;
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        this.showNote(note.id);
-                    });
+                    item.addEventListener('click', () => this.showNote(note.id));
                     container.appendChild(item);
                 });
             }
 
             renderTags() {
-                const allTags = [...new Set(this.notes.flatMap(n => n.tags))];
                 const container = document.getElementById('tagsNav');
                 container.innerHTML = '';
 
-                allTags.forEach(tag => {
-                    const count = this.notes.filter(n => n.tags.includes(tag)).length;
-                    const item = document.createElement('a');
-                    item.href = '#';
+                this.tags.slice(0, 20).forEach(({ tag, count }) => {
+                    const item = document.createElement('div');
                     item.className = 'nav-item';
                     item.innerHTML = `<span class="tag ${tag}">${tag}</span> (${count})`;
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        this.filterByTag(tag);
-                    });
+                    item.addEventListener('click', () => this.filterByTag(tag));
                     container.appendChild(item);
                 });
             }
 
             renderRecent() {
-                const recent = [...this.notes].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
                 const container = document.getElementById('recentNav');
                 container.innerHTML = '';
 
-                recent.forEach(note => {
-                    const item = document.createElement('a');
-                    item.href = '#';
+                this.notes.slice(0, 8).forEach(note => {
+                    const item = document.createElement('div');
                     item.className = 'nav-item';
                     item.innerHTML = `
                         <div style="font-weight: 500; font-size: 0.9rem;">${note.title}</div>
                         <div style="font-size: 0.8rem; color: #656d76;">${note.date}</div>
                     `;
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        this.showNote(note.id);
-                    });
+                    item.addEventListener('click', () => this.showNote(note.id));
                     container.appendChild(item);
                 });
             }
 
             async showNote(noteId, pushState = true) {
-                const note = this.notes.find(n => n.id === noteId);
-                if (!note) return;
-
-                this.currentNote = note;
-
-                // 更新URL
-                if (pushState) {
-                    history.pushState({noteId}, note.title, `#${noteId}`);
-                }
-
-                // 高亮当前选中的导航项
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-
                 try {
-                    const content = await this.loadNoteContent(note.path);
-                    this.renderNote(note, content);
+                    // 更新URL
+                    if (pushState) {
+                        history.pushState({noteId}, '', `#${noteId}`);
+                    }
+
+                    // 显示加载状态
+                    document.getElementById('mainContent').innerHTML = '<div class="loading">加载笔记内容...</div>';
+
+                    // 获取笔记详情
+                    const response = await fetch(`${this.baseURL}/notes/${noteId}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const note = await response.json();
+                    this.renderNote(note);
+
+                    // 更新导航高亮
+                    document.querySelectorAll('.nav-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+
                 } catch (error) {
+                    console.error('加载笔记失败:', error);
                     this.showError(`加载笔记失败: ${error.message}`);
                 }
             }
 
-            async loadNoteContent(path) {
-                // 实际项目中这里会从服务器获取markdown文件内容
-                // 现在返回模拟内容
-                if (path.includes('lmcache-build-compilation')) {
-                    return `# LMCache本地编译安装问题解决
-
-## 问题现象
-- **环境**: Python 3.12 venv，PyTorch已安装
-- **症状**: pip install -e . 重复下载torch，编译时缺少CUDA头文件，路径配置错误
-- **影响范围**: LMCache本地开发环境无法正常编译安装
-
-## 解决方案
-### 最终解决方案
-\`\`\`bash
-# 完整命令，两个参数缺一不可
-pip install -e . --no-build-isolation --no-deps
-\`\`\`
-
-## 根本原因
-1. **构建依赖重复安装**: pip默认创建隔离构建环境，重新安装build-system.requires中的依赖
-2. **CUDA头文件路径问题**: nvidia-cusparse-cu12等包的include路径不在编译器默认搜索路径
-3. **环境变量配置错误**: shell heredoc变量展开时机不当，导致路径污染
-
-## 总结
-- **关键学习点**: --no-deps不影响构建依赖，需配合--no-build-isolation
-- **注意事项**: CUDA包头文件需手动添加到CPATH，shell heredoc变量展开时机很关键`;
-                }
-
-                return `# ${this.currentNote.title}
-
-这是一个示例笔记内容。在实际部署时，这里会显示完整的Markdown内容。
-
-## 主要内容
-
-${this.currentNote.summary}
-
-## 标签
-${this.currentNote.tags.map(tag => `\`${tag}\``).join(' ')}
-
-## 更多信息
-- 类型: ${this.currentNote.type}
-- 分类: ${this.formatCategory(this.currentNote.category)}
-- 日期: ${this.currentNote.date}`;
-            }
-
-            renderNote(note, content) {
+            renderNote(note) {
                 const mainContent = document.getElementById('mainContent');
-
-                // 解析markdown
-                const htmlContent = marked.parse(content);
 
                 mainContent.innerHTML = `
                     <div class="note-header">
@@ -543,13 +528,15 @@ ${this.currentNote.tags.map(tag => `\`${tag}\``).join(' ')}
                             <span>📅 ${note.date}</span>
                             <span style="margin-left: 1rem;">📂 ${this.formatCategory(note.category)}</span>
                             <span style="margin-left: 1rem;">📋 ${note.type === 'troubleshooting' ? '故障排除' : '知识积累'}</span>
+                            ${note.severity ? `<span style="margin-left: 1rem;">⚠️ ${note.severity}</span>` : ''}
+                            ${note.resolved !== undefined ? `<span style="margin-left: 1rem;">✅ ${note.resolved ? '已解决' : '未解决'}</span>` : ''}
                         </div>
                         <div class="note-tags">
                             ${note.tags.map(tag => `<span class="tag ${tag}">${tag}</span>`).join('')}
                         </div>
                     </div>
                     <div class="note-content">
-                        ${htmlContent}
+                        ${note.html}
                     </div>
                 `;
 
@@ -567,6 +554,8 @@ ${this.currentNote.tags.map(tag => `\`${tag}\``).join(' ')}
                 }
 
                 const mainContent = document.getElementById('mainContent');
+                const recentNotes = this.notes.slice(0, 6);
+
                 mainContent.innerHTML = `
                     <div class="note-header">
                         <h1 class="note-title">🏠 技术笔记本</h1>
@@ -575,26 +564,25 @@ ${this.currentNote.tags.map(tag => `\`${tag}\``).join(' ')}
                     <div class="note-content">
                         <div class="stats-grid">
                             <div class="stat-card">
-                                <div class="stat-number">${this.notes.filter(n => n.type === 'troubleshooting').length}</div>
+                                <div class="stat-number">${this.stats.troubleshooting || 0}</div>
                                 <div class="stat-label">故障排除</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-number">${this.notes.filter(n => n.type === 'knowledge').length}</div>
+                                <div class="stat-number">${this.stats.knowledge || 0}</div>
                                 <div class="stat-label">知识积累</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-number">${[...new Set(this.notes.flatMap(n => n.tags))].length}</div>
+                                <div class="stat-number">${this.stats.tags || 0}</div>
                                 <div class="stat-label">标签数量</div>
                             </div>
                         </div>
 
                         <h2>📚 最新笔记</h2>
                         <div style="margin-top: 1rem;">
-                            ${this.notes.slice(0, 5).map(note => `
-                                <div style="border: 1px solid #e1e4e8; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; cursor: pointer;"
-                                     onclick="viewer.showNote('${note.id}')">
-                                    <h3 style="margin: 0 0 0.5rem 0; color: #0969da;">${note.title}</h3>
-                                    <p style="color: #656d76; margin: 0 0 0.5rem 0; font-size: 0.9rem;">${note.summary}</p>
+                            ${recentNotes.map(note => `
+                                <div class="note-card" onclick="viewer.showNote('${note.id}')">
+                                    <h3>${note.title}</h3>
+                                    <p>${note.summary || '暂无摘要'}</p>
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <div>
                                             ${note.tags.slice(0, 3).map(tag => `<span class="tag ${tag}">${tag}</span>`).join('')}
@@ -607,56 +595,61 @@ ${this.currentNote.tags.map(tag => `\`${tag}\``).join(' ')}
 
                         <h2>🎯 使用说明</h2>
                         <ul>
-                            <li><strong>故障排除</strong>: 记录具体问题的诊断和解决过程</li>
-                            <li><strong>知识积累</strong>: 整理技术概念、配置指南和最佳实践</li>
-                            <li><strong>智能标签</strong>: 通过技术关键词快速定位相关内容</li>
-                            <li><strong>搜索功能</strong>: 支持标题和标签的实时搜索</li>
+                            <li><strong>实时同步</strong>: 网页自动读取最新的Markdown文件</li>
+                            <li><strong>智能搜索</strong>: 支持标题、内容和标签的全文搜索</li>
+                            <li><strong>分类浏览</strong>: 按技术领域和笔记类型快速导航</li>
+                            <li><strong>标签系统</strong>: 通过技术关键词快速定位相关内容</li>
                         </ul>
                     </div>
                 `;
             }
 
-            searchNotes(query) {
+            async searchNotes(query) {
                 if (!query.trim()) {
                     this.renderNavigation();
                     return;
                 }
 
-                const filtered = this.notes.filter(note =>
-                    note.title.toLowerCase().includes(query.toLowerCase()) ||
-                    note.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase())) ||
-                    note.summary.toLowerCase().includes(query.toLowerCase())
-                );
+                try {
+                    const response = await fetch(`${this.baseURL}/notes?search=${encodeURIComponent(query)}`);
+                    const filtered = await response.json();
 
-                this.renderNavSection('troubleshootingNav', filtered.filter(n => n.type === 'troubleshooting'));
-                this.renderNavSection('knowledgeNav', filtered.filter(n => n.type === 'knowledge'));
+                    this.renderNavSection('troubleshootingNav', filtered.filter(n => n.type === 'troubleshooting'));
+                    this.renderNavSection('knowledgeNav', filtered.filter(n => n.type === 'knowledge'));
+                } catch (error) {
+                    console.error('搜索失败:', error);
+                }
             }
 
-            filterByTag(tag) {
-                const filtered = this.notes.filter(note => note.tags.includes(tag));
+            async filterByTag(tag) {
+                try {
+                    const response = await fetch(`${this.baseURL}/notes?tag=${encodeURIComponent(tag)}`);
+                    const filtered = await response.json();
 
-                const mainContent = document.getElementById('mainContent');
-                mainContent.innerHTML = `
-                    <div class="note-header">
-                        <h1 class="note-title">🏷️ 标签: ${tag}</h1>
-                        <div class="note-meta">共找到 ${filtered.length} 篇笔记</div>
-                    </div>
-                    <div class="note-content">
-                        ${filtered.map(note => `
-                            <div style="border: 1px solid #e1e4e8; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; cursor: pointer;"
-                                 onclick="viewer.showNote('${note.id}')">
-                                <h3 style="margin: 0 0 0.5rem 0; color: #0969da;">${note.title}</h3>
-                                <p style="color: #656d76; margin: 0 0 0.5rem 0; font-size: 0.9rem;">${note.summary}</p>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        ${note.tags.map(t => `<span class="tag ${t}">${t}</span>`).join('')}
+                    const mainContent = document.getElementById('mainContent');
+                    mainContent.innerHTML = `
+                        <div class="note-header">
+                            <h1 class="note-title">🏷️ 标签: ${tag}</h1>
+                            <div class="note-meta">共找到 ${filtered.length} 篇笔记</div>
+                        </div>
+                        <div class="note-content">
+                            ${filtered.map(note => `
+                                <div class="note-card" onclick="viewer.showNote('${note.id}')">
+                                    <h3>${note.title}</h3>
+                                    <p>${note.summary || '暂无摘要'}</p>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            ${note.tags.map(t => `<span class="tag ${t}">${t}</span>`).join('')}
+                                        </div>
+                                        <span style="color: #656d76; font-size: 0.8rem;">${note.date}</span>
                                     </div>
-                                    <span style="color: #656d76; font-size: 0.8rem;">${note.date}</span>
                                 </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
+                            `).join('')}
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('按标签过滤失败:', error);
+                }
             }
 
             formatCategory(category) {
@@ -686,13 +679,13 @@ ${this.currentNote.tags.map(tag => `\`${tag}\``).join(' ')}
         // 初始化应用
         let viewer;
         document.addEventListener('DOMContentLoaded', () => {
-            viewer = new NotebookViewer();
+            viewer = new NotebookAPI();
 
             // 处理页面加载时的hash
             if (window.location.hash) {
                 const noteId = window.location.hash.substring(1);
                 if (noteId) {
-                    setTimeout(() => viewer.showNote(noteId, false), 100);
+                    setTimeout(() => viewer.showNote(noteId, false), 1000);
                 }
             }
         });
